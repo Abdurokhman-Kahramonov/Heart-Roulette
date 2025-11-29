@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Roulette - Random Voice Roast Edition</title>
+    <style>
+        /* --- CSS VARIABLES & RESET --- */
+        :root {
+            --bg-color: #050505;
+            --box-color: #1a1a1a;
+            --neon-blue: #00f3ff;
+            --neon-green: #00ff41;
+            --neon-red: #ff003c;
+            --heart-color: #ff003c;
+            --text-color: #e0e0e0;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: background-color 0.5s;
+        }
+
+        /* --- SUSPENSE EFFECT --- */
+        .suspense-flicker {
+            animation: flicker-bg 0.1s infinite alternate;
+        }
+
+        @keyframes flicker-bg {
+            0% { opacity: 1; }
+            50% { opacity: 0.98; background-color: #0d0d0d; }
+            100% { opacity: 1; }
+        }
+
+        /* --- START SCREEN STYLES --- */
+        #start-screen {
+            background: #111;
+            padding: 40px;
+            border: 2px solid var(--neon-blue);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.4);
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        #start-screen h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--neon-blue);
+        }
+
+        #name-input {
+            padding: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+            background: #000;
+            border: 1px solid #444;
+            color: var(--text-color);
+            font-family: var(--font-main);
+            font-size: 1rem;
+            text-align: center;
+        }
+        
+        /* The standard button style for START */
+        .btn-start {
+            background: var(--neon-blue);
+            color: #000;
+            padding: 10px 30px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+            text-transform: uppercase;
+        }
+
+        .btn-start:hover {
+            background: #00ffff;
+        }
+
+        /* --- UI LAYOUT --- */
+        .game-container {
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* --- HEARTS DISPLAY --- */
+        .hearts-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            height: 50px;
+        }
+
+        .heart {
+            width: 40px;
+            height: 40px;
+            background-color: var(--heart-color);
+            transform: rotate(45deg);
+            position: relative;
+            box-shadow: 0 0 10px var(--heart-color);
+            transition: all 0.5s ease;
+        }
+
+        .heart::before, .heart::after {
+            content: "";
+            width: 40px;
+            height: 40px;
+            background-color: var(--heart-color);
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .heart::before { top: -20px; left: 0; }
+        .heart::after { top: 0; left: -20px; }
+
+        /* Heart States */
+        .heart.lost {
+            background-color: #333;
+            box-shadow: none;
+            opacity: 0.3;
+            transform: rotate(45deg) scale(0.8);
+        }
+        .heart.lost::before, .heart.lost::after { background-color: #333; }
+
+        .heart.shattered {
+            background-color: transparent;
+            box-shadow: none;
+            opacity: 0;
+            transform: scale(2);
+        }
+
+        /* --- OUTPUT DISPLAY --- */
+        .output-area {
+            height: 80px;
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        #result-text {
+            font-size: 3rem;
+            font-weight: bold;
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px currentColor;
+        }
+        
+        #roast-text {
+            font-size: 1.2rem;
+            color: var(--text-color);
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity 1s;
+        }
+
+        .text-safe { color: var(--neon-green); animation: pulse-green 1s infinite; }
+        .text-eliminated { color: var(--neon-red); animation: shake 0.5s; }
+        .text-scanning { color: var(--neon-blue); font-size: 1.5rem !important; letter-spacing: 2px !important; }
+
+        /* --- THE BOX (BUTTON) --- */
+        .the-box {
+            background: linear-gradient(145deg, #1e1e1e, #121212);
+            border: 2px solid var(--neon-blue);
+            color: var(--neon-blue);
+            padding: 20px 40px;
+            font-size: 1.5rem;
+            font-family: var(--font-main);
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            border-radius: 5px;
+            outline: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .the-box:hover:not(:disabled) {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 30px var(--neon-blue);
+        }
+
+        .the-box:disabled {
+            border-color: #444;
+            color: #444;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* --- CONTROLS --- */
+        .controls {
+            margin-top: 50px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .btn-small {
+            background: transparent;
+            border: 1px solid #555;
+            color: #777;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: var(--font-main);
+            font-size: 0.8rem;
+            transition: 0.3s;
+        }
+
+        .btn-small:hover { border-color: var(--text-color); color: var(--text-color); }
+
+        /* --- ANIMATIONS --- */
+        @keyframes pulse-green {
+            0% { text-shadow: 0 0 10px var(--neon-green); transform: scale(1); }
+            50% { text-shadow: 0 0 25px var(--neon-green); transform: scale(1.1); }
+            100% { text-shadow: 0 0 10px var(--neon-green); transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        /* Glitch effect overlay for eliminated state */
+        .overlay-red {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 0, 0, 0.1);
+            pointer-events: none;
+            display: none;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="overlay-red" id="red-overlay"></div>
+
+    <div id="start-screen">
+        <h2>IDENTIFICATION REQUIRED</h2>
+        <input type="text" id="name-input" placeholder="ENTER YOUR NAME" maxlength="20" required>
+        <button class="btn-start" onclick="startGame()">INITIATE SEQUENCE</button>
+    </div>
+
+    <div class="game-container" id="game-container" style="display: none;">
+        
+        <div class="hearts-row" id="hearts-container">
+            </div>
+
+        <div class="output-area">
+            <div id="result-text"></div>
+            <div id="roast-text">VOICE ROAST ACTIVATED</div> 
+        </div>
+
+        <button id="box-btn" class="the-box" onclick="playTurn()">OPEN THE BOX</button>
+
+        <div class="controls">
+            <button class="btn-small" onclick="resetGame()">RESET SYSTEM</button>
+            <button class="btn-small" id="mute-btn" onclick="toggleMute()">SOUND: ON</button>
+        </div>
+    </div>
+
+    <audio id="bg-music" loop></audio>
+    <audio id="roast-intro-audio"></audio> 
+    <audio id="roast-name-audio"></audio> 
+
+    <script>
+        // --- GLOBAL STATE ---
+        const TOTAL_HEARTS = 7;
+        let currentHearts = TOTAL_HEARTS;
+        let isProcessing = false;
+        let isMuted = false;
+        let gameOver = false;
+        let musicStarted = false;
+        let suspenseInterval;
+        let playerName = "";
+
+        // NEW: Array of available roast audio files
+        const ALL_ROAST_FILES = [
+            'turishingaske.ogg',
+            'bizniloxdeb.ogg',
+            'olfa.ogg',
+            'dosttopiladi.ogg',
+            'drachitgenskamqn.ogg',
+            'emchakshoria.ogg',
+            'hafabomen.ogg',
+            'hudogasoldim.ogg',
+            'indamadim.ogg',
+            'manichun.ogg',
+            'olgaDallbayoplar.ogg',
+            'olganimyq.ogg',
+            'pasholnaxxuy.ogg',
+            'qalesan.ogg',
+            'qotaginiuzilar.ogg',
+            'qotaginiNedavoliniQaravosammi.ogg',
+            'qotagniyesenbomaydimii.ogg',
+            'qotaqaQarang.ogg',
+            'qotobor.ogg',
+            'vaahlaromi.ogg',
+            'zaybaliQildi.ogg'
+    ];
+
+        // --- DOM ELEMENTS ---
+        const container = document.getElementById('hearts-container');
+        const resultText = document.getElementById('result-text');
+        const roastText = document.getElementById('roast-text'); 
+        const boxBtn = document.getElementById('box-btn');
+        const redOverlay = document.getElementById('red-overlay');
+        const muteBtn = document.getElementById('mute-btn');
+        const body = document.body;
+        const startScreen = document.getElementById('start-screen'); 
+        const gameContainer = document.getElementById('game-container'); 
+        const nameInput = document.getElementById('name-input'); 
+        
+        const roastIntroAudio = document.getElementById('roast-intro-audio'); 
+        const roastNameAudio = document.getElementById('roast-name-audio'); 
+        
+        // --- AUDIO SYNTHESIZER (Web Audio API) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function playTone(freq, type, duration, vol=0.1) {
+            if (isMuted) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        const sfx = {
+            click: () => playTone(800, 'sine', 0.1, 0.05),
+            suspense: () => {
+                playTone(70, 'sawtooth', 0.5, 0.08); 
+                setTimeout(() => {
+                    const randomFreq = 1800 + Math.random() * 500;
+                    playTone(randomFreq, 'square', 0.05, 0.03);
+                }, Math.random() * 400);
+            },
+            safe: () => {
+                playTone(400, 'sine', 0.2); 
+                setTimeout(() => playTone(600, 'sine', 0.4), 100);
+            },
+            eliminated: () => {
+                playTone(100, 'sawtooth', 1.5, 0.5); 
+                setTimeout(() => playTone(80, 'sawtooth', 1.5, 0.4), 300);
+            }
+        };
+
+        // --- VOICE ROAST LOGIC (UPDATED FOR RANDOM SELECTION) ---
+        function playVoiceRoast() {
+            if (isMuted) return;
+
+            // 1. Randomly select ONE full roast file from the array (now using ALL_ROAST_FILES)
+            const randomIndex = Math.floor(Math.random() * ALL_ROAST_FILES.length);
+            const selectedRoastFile = ALL_ROAST_FILES[randomIndex];
+
+            // 2. Set the source and play
+            roastIntroAudio.src = selectedRoastFile;
+
+            // Remove the onended listener as we no longer need sequencing
+            roastIntroAudio.onended = null; 
+
+            roastIntroAudio.play().catch(e => 
+                console.log(`Roast audio failed to play. Check ${selectedRoastFile} source.`)
+            );
+        }
+
+        // --- START GAME SEQUENCE ---
+        function startGame() {
+            const name = nameInput.value.trim();
+            if (name.length < 2) {
+                alert("Please enter a valid name to proceed.");
+                return;
+            }
+            playerName = name;
+            startScreen.style.display = 'none';
+            gameContainer.style.display = 'block';
+            initGame();
+        }
+
+        // --- INITIALIZATION ---
+        function initGame() {
+            container.innerHTML = '';
+            for (let i = 0; i < TOTAL_HEARTS; i++) {
+                const h = document.createElement('div');
+                h.className = 'heart';
+                h.id = `heart-${i}`;
+                container.appendChild(h);
+            }
+            currentHearts = TOTAL_HEARTS;
+            gameOver = false;
+            isProcessing = false;
+            boxBtn.disabled = false;
+            boxBtn.innerText = "OPEN THE BOX";
+            resultText.innerText = "";
+            roastText.innerText = "VOICE ROAST ACTIVATED"; 
+            roastText.style.opacity = 0.5; 
+            resultText.className = "";
+            redOverlay.style.display = "none";
+            body.style.backgroundColor = "var(--bg-color)";
+            body.classList.remove('suspense-flicker');
+        }
+
+        // --- GAME LOGIC ---
+        function playTurn() {
+            if (isProcessing || gameOver) return;
+            
+            isProcessing = true;
+            sfx.click();
+            boxBtn.disabled = true;
+            body.classList.add('suspense-flicker'); 
+
+            resultText.className = "text-scanning";
+            
+            suspenseInterval = setInterval(() => {
+                resultText.innerText = Math.random().toString(36).substring(6).toUpperCase().padEnd(6, '.');
+                sfx.suspense(); 
+            }, 200);
+
+            setTimeout(() => {
+                clearInterval(suspenseInterval);
+                body.classList.remove('suspense-flicker'); 
+                resolveTurn();
+            }, 4000); 
+        }
+
+        function resolveTurn() {
+            const isEliminated = Math.random() < (1 / currentHearts);
+
+            if (isEliminated) {
+                triggerEliminated();
+            } else {
+                triggerSafe();
+            }
+            
+            isProcessing = false;
+        }
+
+        function triggerSafe() {
+            sfx.safe();
+            resultText.innerText = "SAFE";
+            resultText.className = "text-safe";
+            roastText.innerText = "VOICE ROAST ACTIVATED"; 
+            roastText.style.opacity = 0.5;
+
+            const heartToRemove = document.getElementById(`heart-${TOTAL_HEARTS - currentHearts}`);
+            if(heartToRemove) heartToRemove.classList.add('lost');
+            
+            currentHearts--;
+            boxBtn.disabled = false;
+        }
+
+        function triggerEliminated() {
+            sfx.eliminated();
+            
+            // 1. Play the sequential, random voice roast
+            playVoiceRoast();
+
+            // 2. Update the UI
+            resultText.innerText = "ELIMINATED";
+            resultText.className = "text-eliminated";
+            
+            roastText.innerText = `ROASTING: ${playerName.toUpperCase()}`;
+            roastText.style.opacity = 1; 
+
+            document.body.style.backgroundColor = "#1a0000";
+            redOverlay.style.display = "block";
+            
+            const remaining = document.querySelectorAll('.heart:not(.lost)');
+            remaining.forEach(h => h.classList.add('shattered'));
+
+            gameOver = true;
+            boxBtn.innerText = "TERMINATED";
+            boxBtn.disabled = true;
+        }
+
+        // --- UTILITIES ---
+        function resetGame() {
+            sfx.click();
+            initGame();
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            muteBtn.innerText = isMuted ? "SOUND: OFF" : "SOUND: ON";
+            if(isMuted) {
+                // bgMusic.pause(); 
+                clearInterval(suspenseInterval);
+                roastIntroAudio.pause(); 
+                roastNameAudio.pause(); 
+            } else if (musicStarted) {
+                // bgMusic.play(); 
+            }
+        }
+
+    </script>
+</body>
+</html>
