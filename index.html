@@ -300,27 +300,27 @@
 
         // NEW: Array of available roast audio files
         const ALL_ROAST_FILES = [
-            'turishingaske.ogg',
             'bizniloxdeb.ogg',
-            'olfa.ogg',
+            'dlb.ogg',
             'dosttopiladi.ogg',
-            'drachitgenskamqn.ogg',
-            'emchakshoria.ogg',
+            'drachitqsenskaman.ogg',
+            'emchakshorva.ogg',
             'hafabomen.ogg',
             'hudogasoldim.ogg',
             'indamadim.ogg',
             'manichun.ogg',
-            'olgaDallbayoplar.ogg',
-            'olganimyq.ogg',
+            'olgaDalbayoplar.ogg',
+            'olganimyo.ogg',
             'pasholnaxxuy.ogg',
             'qalesan.ogg',
             'qotaginiuzilar.ogg',
-            'qotaginiNedavoliniQaravosammi.ogg',
-            'qotagniyesenbomaydimii.ogg',
-            'qotaqaQarang.ogg',
+            'qotagniNedavolniQaravosammi.ogg',
+            'qotagniyesenbomaydimi.ogg',
+            'qotaqqaQarang.ogg',
             'qotobor.ogg',
-            'vaahlaromi.ogg',
-            'zaybaliQildi.ogg'
+            'turishingaske.ogg',
+            'vaaHaromi.ogg',
+            'zaybalQildi.ogg'
     ];
 
         // --- DOM ELEMENTS ---
@@ -428,7 +428,7 @@
             boxBtn.disabled = false;
             boxBtn.innerText = "OPEN THE BOX";
             resultText.innerText = "";
-            roastText.innerText = "VOICE ROAST ACTIVATED"; 
+            roastText.innerText = "Version 1.0"; 
             roastText.style.opacity = 0.5; 
             resultText.className = "";
             redOverlay.style.display = "none";
@@ -475,7 +475,7 @@
             sfx.safe();
             resultText.innerText = "SAFE";
             resultText.className = "text-safe";
-            roastText.innerText = "VOICE ROAST ACTIVATED"; 
+            roastText.innerText = "BOS KNOPKANI!"; 
             roastText.style.opacity = 0.5;
 
             const heartToRemove = document.getElementById(`heart-${TOTAL_HEARTS - currentHearts}`);
@@ -495,7 +495,7 @@
             resultText.innerText = "ELIMINATED";
             resultText.className = "text-eliminated";
             
-            roastText.innerText = `ROASTING: ${playerName.toUpperCase()}`;
+            roastText.innerText = `Battar BO'L: ${playerName.toUpperCase()}`;
             roastText.style.opacity = 1; 
 
             document.body.style.backgroundColor = "#1a0000";
